@@ -1,4 +1,10 @@
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.client.servlet.OAuth2ClientAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
   datasource:
     url: jdbc:postgresql://localhost:5432/springboot_db
     username: postgres
@@ -34,16 +40,16 @@ spring:
   security:
     oauth2:
       client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:dummu}
-            client-secret: ${GOOGLE_CLIENT_SECRET:mduuj}
-            scope: openid, profile, email
+        registration: {}
 
 server:
   port: 8081
 
 app:
+  security:
+    enabled: false
+    authorization-server:
+      enabled: false
   media:
     minio:
       endpoint: ${MINIO_ENDPOINT:http://localhost:9000}

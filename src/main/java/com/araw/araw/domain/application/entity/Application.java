@@ -200,12 +200,15 @@ public class Application {
     }
 
     public void accept() {
-        if (this.status != ApplicationStatus.UNDER_REVIEW && this.status != ApplicationStatus.SUBMITTED) {
-            throw new IllegalStateException("Application must be under review or submitted");
+        if (this.status != ApplicationStatus.UNDER_REVIEW
+                && this.status != ApplicationStatus.SUBMITTED
+                && this.status != ApplicationStatus.WAITLISTED) {
+            throw new IllegalStateException("Application must be under review, submitted, or waitlisted");
         }
         this.status = ApplicationStatus.ACCEPTED;
         this.acceptanceSentAt = LocalDateTime.now();
         this.confirmationToken = UUID.randomUUID().toString();
+        this.waitlistPosition = null;
     }
 
     public void reject(String reason) {

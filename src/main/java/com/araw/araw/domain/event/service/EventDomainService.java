@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -122,16 +123,16 @@ public class EventDomainService {
                 .shortDescription(original.getShortDescription())
                 .eventType(original.getEventType())
                 .status(EventStatus.DRAFT)
-                .location(original.getLocation())
+                .location(copyLocation(original.getLocation()))
                 .maxParticipants(original.getMaxParticipants())
                 .minAge(original.getMinAge())
                 .maxAge(original.getMaxAge())
                 .isFree(original.getIsFree())
                 .cost(original.getCost())
                 .currency(original.getCurrency())
-                .prerequisites(original.getPrerequisites())
-                .learningOutcomes(original.getLearningOutcomes())
-                .targetGrades(original.getTargetGrades())
+                .prerequisites(copySet(original.getPrerequisites()))
+                .learningOutcomes(copySet(original.getLearningOutcomes()))
+                .targetGrades(copySet(original.getTargetGrades()))
                 .build();
 
         return eventRepository.save(cloned);
@@ -176,5 +177,36 @@ public class EventDomainService {
         }
         return (double) event.getParticipantCount() / event.getMaxParticipants() * 100;
     }
-}
 
+    private com.araw.araw.domain.event.valueobject.Location copyLocation(com.araw.araw.domain.event.valueobject.Location original) {
+        if (original == null) {
+            return null;
+        }
+        return com.araw.araw.domain.event.valueobject.Location.builder()
+                .venueName(original.getVenueName())
+                .addressLine1(original.getAddressLine1())
+                .addressLine2(original.getAddressLine2())
+                .city(original.getCity())
+                .stateProvince(original.getStateProvince())
+                .postalCode(original.getPostalCode())
+                .country(original.getCountry())
+                .latitude(original.getLatitude())
+                .longitude(original.getLongitude())
+                .roomNumber(original.getRoomNumber())
+                .buildingName(original.getBuildingName())
+                .parkingInfo(original.getParkingInfo())
+                .accessibilityInfo(original.getAccessibilityInfo())
+                .virtualMeetingUrl(original.getVirtualMeetingUrl())
+                .virtualMeetingPassword(original.getVirtualMeetingPassword())
+                .isVirtual(original.getIsVirtual())
+                .isHybrid(original.getIsHybrid())
+                .build();
+    }
+
+    private <T> HashSet<T> copySet(java.util.Set<T> source) {
+        if (source == null) {
+            return null;
+        }
+        return new HashSet<>(source);
+    }
+}

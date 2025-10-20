@@ -66,7 +66,7 @@ class FeedbackApplicationServiceTest {
                 .eventId(eventId)
                 .submittedByName("Akosua")
                 .submittedByEmail("akosua@example.com")
-                .feedbackType(FeedbackType.PARTICIPANT)
+                .feedbackType(FeedbackType.POST_EVENT)
                 .rating(RatingDto.builder()
                         .overallRating(5)
                         .contentRating(5)

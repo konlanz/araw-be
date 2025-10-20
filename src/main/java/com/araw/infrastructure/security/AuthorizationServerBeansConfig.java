@@ -5,6 +5,10 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,7 +34,20 @@ import java.util.UUID;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
 
 @Configuration
+@ConditionalOnProperty(
+        prefix = "app.security.authorization-server",
+        name = "enabled",
+        havingValue = "true",
+        matchIfMissing = false
+)
 public class AuthorizationServerBeansConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthorizationServerBeansConfig.class);
+
+    @PostConstruct
+    void logActivation() {
+        log.info("AuthorizationServerBeansConfig activated");
+    }
 
     @Bean
     public RegisteredClientRepository registeredClientRepository(PasswordEncoder passwordEncoder) {

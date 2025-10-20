@@ -136,8 +136,8 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     @Modifying
     @Query("UPDATE Application a SET a.status = 'CANCELLED', " +
-            "a.cancelledAt = :now, a.cancellationReason = :reason " +
-            "WHERE a.event.id = :eventId AND a.status IN ('SUBMITTED', 'ACCEPTED', 'WAITLISTED')")
+            "a.cancelledAt = :now, a.cancellationReason = :reason, a.waitlistPosition = null " +
+            "WHERE a.event.id = :eventId AND a.status IN ('DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'ACCEPTED', 'WAITLISTED', 'CONFIRMED')")
     int cancelApplicationsForEvent(@Param("eventId") UUID eventId,
                                    @Param("reason") String reason,
                                    @Param("now") LocalDateTime now);

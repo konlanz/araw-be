@@ -123,6 +123,9 @@ public class Event {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
+
     @Column(name = "view_count")
     private Long viewCount = 0L;
 
@@ -157,6 +160,7 @@ public class Event {
             throw new IllegalStateException("Cannot cancel a completed or already cancelled event");
         }
         this.status = EventStatus.CANCELLED;
+        this.cancellationReason = reason != null ? reason.trim() : null;
     }
 
     public void start() {

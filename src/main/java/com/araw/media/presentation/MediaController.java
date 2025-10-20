@@ -40,18 +40,18 @@ public class MediaController {
     public MediaAssetResponse uploadMedia(@RequestPart("file") MultipartFile file,
                                           @RequestParam("category") MediaCategory category,
                                           @RequestParam(value = "description", required = false) String description) throws IOException {
-        var command = new MediaUploadCommand(
+        try (var command = new MediaUploadCommand(
                 file.getOriginalFilename(),
                 file.getContentType(),
                 file.getSize(),
                 file.getInputStream(),
                 category,
                 description
-        );
-
-        MediaAsset asset = mediaStorageService.storeMedia(command);
-        String url = mediaStorageService.generatePresignedUrl(asset.getId());
-        return mapper.toResponse(asset, url);
+        )) {
+            MediaAsset asset = mediaStorageService.storeMedia(command);
+            String url = mediaStorageService.generatePresignedUrl(asset.getId());
+            return mapper.toResponse(asset, url);
+        }
     }
 
     @GetMapping("/{assetId}")
