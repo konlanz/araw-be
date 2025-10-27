@@ -57,6 +57,12 @@ public class Event {
     @Column(name = "application_link", length = 500)
     private String applicationLink;
 
+    @Column(name = "application_slug", unique = true, length = 160)
+    private String applicationSlug;
+
+    @Column(name = "application_link_generated_at")
+    private LocalDateTime applicationLinkGeneratedAt;
+
     @Column(name = "application_deadline")
     private LocalDateTime applicationDeadline;
 
@@ -135,6 +141,15 @@ public class Event {
     @Column(name = "participant_count")
     private Integer participantCount = 0;
 
+    @Column(name = "feedback_enabled")
+    private Boolean feedbackEnabled = false;
+
+    @Column(name = "feedback_opens_at")
+    private LocalDateTime feedbackOpensAt;
+
+    @Column(name = "feedback_closes_at")
+    private LocalDateTime feedbackClosesAt;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -212,5 +227,19 @@ public class Event {
         if (this.applicationCount > 0) {
             this.applicationCount--;
         }
+    }
+
+    public boolean isFeedbackWindowOpen() {
+        if (!Boolean.TRUE.equals(feedbackEnabled)) {
+            return false;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        if (feedbackOpensAt != null && now.isBefore(feedbackOpensAt)) {
+            return false;
+        }
+        if (feedbackClosesAt != null && now.isAfter(feedbackClosesAt)) {
+            return false;
+        }
+        return true;
     }
 }

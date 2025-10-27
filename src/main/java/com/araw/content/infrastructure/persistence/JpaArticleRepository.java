@@ -19,4 +19,7 @@ public interface JpaArticleRepository extends ArticleRepository, JpaRepository<A
 
     @Override
     Page<Article> findAllByStatus(ArticleStatus status, Pageable pageable);
+
+    @Override
+    long countByStatus(ArticleStatus status);
 }

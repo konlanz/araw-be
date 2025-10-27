@@ -1,0 +1,10 @@
+Hello {{applicant.firstName}},
+
+This is to confirm that your application for {{event.title}} has been cancelled.
+
+Reason: {{application.cancellationReason}}
+
+If this was unexpected or you would like to re-open your application, reply to this email and we will help right away.
+
+Thank you for staying engaged with ARAW,
+The ARAW Programs Team

@@ -5,6 +5,9 @@ import com.araw.araw.application.dto.feedback.FeedbackResponse;
 import com.araw.araw.application.dto.feedback.FeedbackSummaryResponse;
 import com.araw.araw.application.dto.feedback.UpdateFeedbackRequest;
 import com.araw.araw.application.mapper.FeedbackMapper;
+import com.araw.araw.domain.application.entity.Application;
+import com.araw.araw.domain.application.repository.ApplicationRepository;
+import com.araw.araw.domain.application.valueobject.ApplicationStatus;
 import com.araw.araw.domain.event.entity.Event;
 import com.araw.araw.domain.event.repository.EventRepository;
 import com.araw.araw.domain.feedback.entity.Feedback;
@@ -32,10 +35,18 @@ public class FeedbackApplicationService {
     private final ParticipantRepository participantRepository;
     private final FeedbackMapper feedbackMapper;
     private final FeedbackDomainService feedbackDomainService;
+    private final ApplicationRepository applicationRepository;
+
+    private static final java.util.EnumSet<ApplicationStatus> FEEDBACK_ELIGIBLE_STATUSES =
+            java.util.EnumSet.of(ApplicationStatus.ACCEPTED, ApplicationStatus.CONFIRMED);
 
     public FeedbackResponse createFeedback(CreateFeedbackRequest request) {
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new DomainNotFoundException("Event not found: " + request.getEventId()));
+
+        if (!event.isFeedbackWindowOpen()) {
+            throw new DomainValidationException("Feedback collection is not open for this event.");
+        }
 
         Participant participant = null;
         if (request.getParticipantId() != null) {
@@ -48,6 +59,11 @@ public class FeedbackApplicationService {
 
         if (participant == null && feedbackRepository.existsByEventIdAndSubmittedByEmail(event.getId(), request.getSubmittedByEmail())) {
             throw new DomainValidationException("Feedback already submitted with this email for the event");
+        }
+
+        ApplicationStatus applicationStatus = resolveApplicationStatus(event.getId(), participant, request.getSubmittedByEmail());
+        if (applicationStatus == null || !FEEDBACK_ELIGIBLE_STATUSES.contains(applicationStatus)) {
+            throw new DomainValidationException("Only accepted attendees may submit feedback for this event.");
         }
 
         Feedback feedback = feedbackMapper.toEntity(request);
@@ -133,5 +149,19 @@ public class FeedbackApplicationService {
     private Feedback getFeedbackEntity(UUID feedbackId) {
         return feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new DomainNotFoundException("Feedback not found: " + feedbackId));
+    }
+
+    private ApplicationStatus resolveApplicationStatus(UUID eventId, Participant participant, String email) {
+        if (participant != null) {
+            return applicationRepository.findTopByEventIdAndParticipantIdOrderBySubmittedAtDesc(eventId, participant.getId())
+                    .map(Application::getStatus)
+                    .orElse(null);
+        }
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return applicationRepository.findTopByEventIdAndEmailOrderBySubmittedAtDesc(eventId, email.trim())
+                .map(Application::getStatus)
+                .orElse(null);
     }
 }

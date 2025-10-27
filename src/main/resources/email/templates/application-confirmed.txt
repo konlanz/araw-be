@@ -1,0 +1,8 @@
+Hello {{applicant.firstName}},
+
+You are officially confirmed for {{event.title}}! We can’t wait to build with you.
+
+We will share detailed logistics and prep resources soon. If anything changes, please let us know so we can offer the spot to someone on the waitlist.
+
+See you there,
+The ARAW Programs Team

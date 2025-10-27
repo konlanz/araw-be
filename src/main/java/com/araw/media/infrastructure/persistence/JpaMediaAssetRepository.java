@@ -19,4 +19,7 @@ public interface JpaMediaAssetRepository extends MediaAssetRepository, JpaReposi
 
     @Override
     Page<MediaAsset> findAllByCategory(MediaCategory category, Pageable pageable);
+
+    @Override
+    long countByCategory(MediaCategory category);
 }

@@ -122,10 +122,14 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
     List<Object[]> countEventsByType();
 
     @Query("SELECT SUM(e.participantCount) FROM Event e WHERE e.status = 'COMPLETED'")
-    Long getTotalParticipantsServed();
+   Long getTotalParticipantsServed();
 
     @Query("SELECT AVG(e.participantCount) FROM Event e WHERE e.status = 'COMPLETED'")
     Double getAverageParticipantsPerEvent();
+
+    @Query("SELECT AVG(CASE WHEN e.maxParticipants IS NOT NULL AND e.maxParticipants > 0 " +
+            "THEN (1.0 * e.participantCount / e.maxParticipants) ELSE NULL END) FROM Event e")
+    Double getAverageCapacityUtilization();
 
     @Modifying
     @Query("UPDATE Event e SET e.viewCount = e.viewCount + 1 WHERE e.id = :eventId")
@@ -157,4 +161,8 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
             "(SELECT DISTINCT ev.id FROM Event ev JOIN ev.eventDates ed " +
             "GROUP BY ev.id HAVING MAX(ed.sessionEndDate) < :now)")
     int completeEventsWithPastEndDate(@Param("now") LocalDateTime now);
+
+    Optional<Event> findByApplicationSlug(String applicationSlug);
+
+    boolean existsByApplicationSlug(String applicationSlug);
 }

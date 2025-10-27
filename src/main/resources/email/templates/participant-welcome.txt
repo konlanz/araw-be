@@ -1,0 +1,12 @@
+Hello {{participant.displayName}},
+
+Welcome to the ARAW participant community! Your profile is now active and your unique participant code is {{participant.participantCode}}.
+
+Use the link below to apply for upcoming programs like {{event.title}}:
+
+{{event.applicationLink}}
+
+We are excited to see what you build with us.
+
+With gratitude,
+The ARAW Programs Team

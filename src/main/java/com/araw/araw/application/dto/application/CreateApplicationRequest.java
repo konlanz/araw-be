@@ -13,7 +13,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateApplicationRequest {
 
-    @NotNull(message = "Event ID is required")
     private UUID eventId;
 
     private UUID participantId;

@@ -19,4 +19,8 @@ public interface ArticleRepository {
     Page<Article> findAll(Pageable pageable);
 
     Page<Article> findAllByStatus(ArticleStatus status, Pageable pageable);
+
+    long count();
+
+    long countByStatus(ArticleStatus status);
 }

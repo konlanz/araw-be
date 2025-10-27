@@ -25,6 +25,8 @@ public class EventResponse {
     private Integer minAge;
     private Integer maxAge;
     private String applicationLink;
+    private String applicationSlug;
+    private LocalDateTime applicationLinkGeneratedAt;
     private LocalDateTime applicationDeadline;
     private LocalDateTime registrationOpensAt;
     private LocalDateTime registrationClosesAt;
@@ -44,6 +46,9 @@ public class EventResponse {
     private Long viewCount;
     private Integer applicationCount;
     private Integer participantCount;
+    private Boolean feedbackEnabled;
+    private LocalDateTime feedbackOpensAt;
+    private LocalDateTime feedbackClosesAt;
     private Integer availableSpots;
     private Boolean isRegistrationOpen;
     private Double capacityPercentage;
@@ -51,4 +56,3 @@ public class EventResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

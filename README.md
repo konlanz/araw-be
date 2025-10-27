@@ -25,6 +25,7 @@ Override with environment variables or profile-specific `application.yml`.
 | MinIO | `MINIO_ENDPOINT`, `MINIO_BUCKET`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_REGION`, `MINIO_SECURE` | `http://localhost:9000`, `araw-media`, `minioadmin`, `minioadmin`, `us-east-1`, `false` |
 | Media URLs | `MINIO_PRESIGNED_EXPIRY_MINUTES` | `60` |
 | Notifications | `PUBLICATION_NOTIFICATION_RECIPIENTS`, `PUBLICATION_SITE_URL`, `PUBLICATION_NOTIFICATION_FROM` | _(none)_, `https://www.ara-w.org`, _(derived from `spring.mail.username`)_ |
+| Notifications Email | `APPLICATION_BASE_URL`, `FEEDBACK_BASE_URL` | `https://apply.ara-w.org/events`, _(none)_ |
 | Gmail SMTP | `MAIL_USERNAME`, `MAIL_PASSWORD` | _(none)_ |
 
 Test profile (`src/test/resources/application.yml`) runs in-memory H2, disables publication emails, and points mail to a dummy SMTP host.
@@ -60,6 +61,9 @@ Publishing triggers `ArticlePublishedEvent`, which emits Gmail notifications aft
 - `GET /?category=` – paginated listing filtered by `MediaCategory`.
 - `DELETE /{id}` – remove object from MinIO and catalog.
 
+#### Public Applications (`/api/public/events/{applicationSlug}/applications`)
+- `POST /` – open endpoint that (optionally) creates a participant, submits their application, and emails them using the Gmail templates. The event must be published, open for registration, and have capacity.
+
 ### Authentication (OAuth 2.0)
 - Spring Authorization Server is embedded in the backend. Confidential clients can use the authorization-code + refresh-token flow against the `/oauth2/authorize` and `/oauth2/token` endpoints (see `AuthorizationServerBeansConfig` for the sample `admin-client`).
 - Admin users authenticate either using their local credentials (stored in the `admins` table) or via federated Google sign-in (`spring.security.oauth2.client.registration.google.*`). Only pre-existing, active admin emails are allowed; no automatic provisioning occurs.
@@ -80,4 +84,5 @@ Coverage includes service-level specifications for article slug uniqueness, publ
 - Harden authN/authZ once administrative roles are finalized.
 - Extend content search (full-text) and caching for high-traffic stories.
 - Expand notification channels (Slack/WhatsApp) alongside email.
+- Layer reminder and survey automations onto the new templated email service.
 - Introduce moderation workflows for user-generated submissions.

@@ -1,0 +1,13 @@
+Hello {{applicant.firstName}},
+
+Thank you for submitting your application for {{event.title}}.
+
+- Application number: {{application.number}}
+- Submitted: {{application.submittedAt}}
+
+We will review your application and follow up with next steps soon. You can revisit the event details or update your profile any time using the link below:
+
+{{event.applicationLink}}
+
+Warm regards,
+The ARAW Programs Team

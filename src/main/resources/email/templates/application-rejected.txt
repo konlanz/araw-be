@@ -1,0 +1,10 @@
+Hello {{applicant.firstName}},
+
+Thank you for taking the time to apply to {{event.title}}. After reviewing all submissions, we are unable to offer you a place in this cohort.
+
+Reason: {{application.rejectionReason}}
+
+We encourage you to stay connected and apply for future opportunities. Your passion for learning matters, and we hope to collaborate soon.
+
+With appreciation,
+The ARAW Programs Team

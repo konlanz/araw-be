@@ -13,6 +13,8 @@ import com.araw.araw.domain.event.entity.Event;
 import com.araw.araw.domain.event.repository.EventRepository;
 import com.araw.araw.domain.participant.enitity.Participant;
 import com.araw.araw.domain.participant.repository.ParticipantRepository;
+import com.araw.notification.template.TemplatedEmailRequest;
+import com.araw.notification.template.TemplatedEmailService;
 import com.araw.shared.exception.DomainNotFoundException;
 import com.araw.shared.exception.DomainValidationException;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -29,12 +32,18 @@ import java.util.UUID;
 @Transactional
 public class ApplicationApplicationService {
 
+    private static final DateTimeFormatter HUMAN_READABLE = DateTimeFormatter.ofPattern("MMMM d, yyyy 'at' HH:mm");
+
     private final ApplicationRepository applicationRepository;
     private final EventRepository eventRepository;
     private final ParticipantRepository participantRepository;
     private final ApplicationMapper applicationMapper;
+    private final TemplatedEmailService templatedEmailService;
 
     public ApplicationResponse createApplication(CreateApplicationRequest request) {
+        if (request.getEventId() == null) {
+            throw new DomainValidationException("Event ID is required");
+        }
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new DomainNotFoundException("Event not found: " + request.getEventId()));
 
@@ -94,7 +103,9 @@ public class ApplicationApplicationService {
             throw new DomainValidationException("Application must be under review, submitted, or waitlisted before acceptance");
         }
         application.accept();
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        sendStatusEmail(saved, "application-accepted.txt", "You're accepted to {{event.title}}!");
+        return applicationMapper.toResponse(saved);
     }
 
     public ApplicationResponse rejectApplication(UUID applicationId, String reason) {
@@ -105,6 +116,7 @@ public class ApplicationApplicationService {
         application.reject(reason);
         Application saved = applicationRepository.save(application);
         eventRepository.decrementApplicationCount(saved.getEvent().getId());
+        sendStatusEmail(saved, "application-rejected.txt", "Update on your {{event.title}} application");
         return applicationMapper.toResponse(saved);
     }
 
@@ -116,13 +128,17 @@ public class ApplicationApplicationService {
             waitlistPosition = maxPosition != null ? maxPosition + 1 : 1;
         }
         application.waitlist(waitlistPosition);
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        sendStatusEmail(saved, "application-waitlisted.txt", "{{event.title}} application waitlist update");
+        return applicationMapper.toResponse(saved);
     }
 
     public ApplicationResponse confirmApplication(UUID applicationId) {
         Application application = getApplicationEntity(applicationId);
         application.confirm();
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        sendStatusEmail(saved, "application-confirmed.txt", "{{event.title}} spot confirmed");
+        return applicationMapper.toResponse(saved);
     }
 
     public ApplicationResponse cancelApplication(UUID applicationId, String reason) {
@@ -133,6 +149,7 @@ public class ApplicationApplicationService {
         application.cancel(reason);
         Application saved = applicationRepository.save(application);
         eventRepository.decrementApplicationCount(saved.getEvent().getId());
+        sendStatusEmail(saved, "application-cancelled.txt", "{{event.title}} application cancelled");
         return applicationMapper.toResponse(saved);
     }
 
@@ -165,5 +182,67 @@ public class ApplicationApplicationService {
     private Application getApplicationEntity(UUID applicationId) {
         return applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new DomainNotFoundException("Application not found: " + applicationId));
+    }
+
+    private void sendStatusEmail(Application application, String templateName, String subjectTemplate) {
+        if (application.getEmail() == null || application.getEmail().isBlank()) {
+            return;
+        }
+
+        Map<String, Object> variables = buildEmailVariables(application);
+
+        templatedEmailService.send(TemplatedEmailRequest.builder()
+                .templateName(templateName)
+                .subjectTemplate(subjectTemplate)
+                .variables(variables)
+                .to(application.getEmail())
+                .build());
+    }
+
+    private Map<String, Object> buildEmailVariables(Application application) {
+        Map<String, Object> variables = new java.util.HashMap<>();
+
+        Map<String, Object> applicant = new java.util.HashMap<>();
+        if (application.getApplicantInfo() != null) {
+            applicant.put("firstName", application.getApplicantInfo().getFirstName());
+            applicant.put("lastName", application.getApplicantInfo().getLastName());
+        }
+        applicant.put("email", application.getEmail());
+        variables.put("applicant", applicant);
+
+        Map<String, Object> event = new java.util.HashMap<>();
+        if (application.getEvent() != null) {
+            event.put("title", application.getEvent().getTitle());
+            event.put("applicationLink", application.getEvent().getApplicationLink());
+            event.put("applicationSlug", application.getEvent().getApplicationSlug());
+        }
+        variables.put("event", event);
+
+        Map<String, Object> applicationData = new java.util.HashMap<>();
+        applicationData.put("number", application.getApplicationNumber());
+        applicationData.put("status", application.getStatus().name());
+        if (application.getSubmittedAt() != null) {
+            applicationData.put("submittedAt", application.getSubmittedAt().format(HUMAN_READABLE));
+        }
+        if (application.getWaitlistPosition() != null) {
+            applicationData.put("waitlistPosition", application.getWaitlistPosition());
+        }
+        if (application.getRejectionReason() != null) {
+            applicationData.put("rejectionReason", application.getRejectionReason());
+        }
+        if (application.getCancellationReason() != null) {
+            applicationData.put("cancellationReason", application.getCancellationReason());
+        }
+        if (application.getConfirmationToken() != null && application.getEvent() != null) {
+            String baseUrl = templatedEmailService.getTemplateProperties().getApplicationBaseUrl();
+            if (baseUrl != null && !baseUrl.isBlank() && application.getEvent().getApplicationSlug() != null) {
+                applicationData.put("confirmationUrl",
+                        baseUrl + "/" + application.getEvent().getApplicationSlug() + "/confirm?token=" + application.getConfirmationToken());
+            }
+            applicationData.put("confirmationToken", application.getConfirmationToken());
+        }
+        variables.put("application", applicationData);
+
+        return variables;
     }
 }

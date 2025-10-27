@@ -6,6 +6,8 @@ import com.araw.araw.domain.event.entity.Event;
 import com.araw.araw.domain.event.repository.EventRepository;
 import com.araw.araw.domain.event.valueobject.EventStatus;
 import com.araw.araw.domain.participant.enitity.Participant;
+import com.araw.notification.config.EmailTemplateProperties;
+import com.araw.shared.text.SlugGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +24,12 @@ public class EventDomainService {
 
     private final EventRepository eventRepository;
     private final ApplicationRepository applicationRepository;
+    private final SlugGenerator slugGenerator;
+    private final EmailTemplateProperties emailTemplateProperties;
 
     public Event publishEvent(Event event) {
         validateEventForPublishing(event);
+        ensureApplicationLink(event);
         event.publish();
         return eventRepository.save(event);
     }
@@ -46,6 +51,37 @@ public class EventDomainService {
         if (event.getLocation() == null) {
             throw new IllegalStateException("Event must have a location");
         }
+    }
+
+    private void ensureApplicationLink(Event event) {
+        if (event.getApplicationSlug() == null || event.getApplicationSlug().isBlank()) {
+            String baseSlug = slugGenerator.generateSlug(event.getTitle());
+            String uniqueSlug = resolveUniqueSlug(baseSlug, event.getId());
+            event.setApplicationSlug(uniqueSlug);
+        }
+
+        if (event.getApplicationLink() == null || event.getApplicationLink().isBlank()) {
+            String baseUrl = emailTemplateProperties.getApplicationBaseUrl();
+            if (baseUrl != null && !baseUrl.isBlank()) {
+                event.setApplicationLink(baseUrl + "/" + event.getApplicationSlug());
+                event.setApplicationLinkGeneratedAt(LocalDateTime.now());
+            }
+        }
+    }
+
+    private String resolveUniqueSlug(String baseSlug, UUID eventId) {
+        String candidate = baseSlug;
+        int counter = 1;
+        while (slugExists(candidate, eventId)) {
+            candidate = baseSlug + "-" + counter++;
+        }
+        return candidate;
+    }
+
+    private boolean slugExists(String slug, UUID currentId) {
+        return eventRepository.findByApplicationSlug(slug)
+                .filter(existing -> currentId == null || !existing.getId().equals(currentId))
+                .isPresent();
     }
 
 

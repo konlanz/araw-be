@@ -70,5 +70,8 @@ public class CreateEventRequest {
 
     private String bannerImageUrl;
     private String thumbnailUrl;
-}
 
+    private Boolean feedbackEnabled;
+    private LocalDateTime feedbackOpensAt;
+    private LocalDateTime feedbackClosesAt;
+}

@@ -1,0 +1,10 @@
+Hello {{applicant.firstName}},
+
+Thanks for applying to {{event.title}}. We received more interest than spots and have placed you on the waitlist.
+
+Current waitlist position: {{application.waitlistPosition}}
+
+We will notify you immediately if a seat becomes available. In the meantime, feel free to reach out if you have questions.
+
+Best,
+The ARAW Programs Team

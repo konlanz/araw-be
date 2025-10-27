@@ -1,0 +1,12 @@
+Hello {{applicant.firstName}},
+
+Congratulations! Your application ({{application.number}}) for {{event.title}} has been accepted.
+
+To confirm your spot, complete the confirmation steps here:
+
+{{application.confirmationUrl}}
+
+We recommend responding within 48 hours so we can plan resources and notify the waitlist if needed.
+
+See you soon,
+The ARAW Programs Team

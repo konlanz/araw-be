@@ -40,6 +40,10 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
 
     List<Application> findByEmailOrderBySubmittedAtDesc(String email);
 
+    Optional<Application> findTopByEventIdAndParticipantIdOrderBySubmittedAtDesc(UUID eventId, UUID participantId);
+
+    Optional<Application> findTopByEventIdAndEmailOrderBySubmittedAtDesc(UUID eventId, String email);
+
     boolean existsByEventIdAndEmail(UUID eventId, String email);
 
     boolean existsByEventIdAndParticipantId(UUID eventId, UUID participantId);

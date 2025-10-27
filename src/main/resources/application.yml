@@ -65,3 +65,7 @@ app:
       recipients: ${PUBLICATION_NOTIFICATION_RECIPIENTS:}
       site-url: ${PUBLICATION_SITE_URL:https://www.ara-w.org}
       from-address: ${PUBLICATION_NOTIFICATION_FROM:}
+    email:
+      template-base-path: email/templates
+      application-base-url: ${APPLICATION_BASE_URL:https://apply.ara-w.org/events}
+      feedback-base-url: ${FEEDBACK_BASE_URL:}

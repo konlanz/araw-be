@@ -19,4 +19,8 @@ public interface MediaAssetRepository {
     Page<MediaAsset> findAllByCategory(MediaCategory category, Pageable pageable);
 
     void delete(MediaAsset asset);
+
+    long count();
+
+    long countByCategory(MediaCategory category);
 }
