@@ -44,7 +44,18 @@ public class PublicEventApplicationService {
                                                  PublicEventApplicationRequest request) {
         Event event = eventRepository.findByApplicationSlug(applicationSlug)
                 .orElseThrow(() -> new DomainNotFoundException("Event not found for link: " + applicationSlug));
+        return submitApplication(event, request);
+    }
 
+    public ApplicationResponse submitApplication(UUID eventId,
+                                                 PublicEventApplicationRequest request) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new DomainNotFoundException("Event not found: " + eventId));
+        return submitApplication(event, request);
+    }
+
+    private ApplicationResponse submitApplication(Event event,
+                                                  PublicEventApplicationRequest request) {
         validateEventForApplication(event);
 
         CreateApplicationRequest applicationRequest = request.getApplication();

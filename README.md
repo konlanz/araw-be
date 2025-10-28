@@ -36,6 +36,13 @@ mvn spring-boot:run
 ```
 Use `docker compose` to spin up PostgreSQL and MinIO if desired. Ensure MinIO credentials match the defaults or override via environment variables.
 
+```bash
+# launch both backing services (data persists in named volumes)
+docker compose up -d postgres minio
+```
+
+The MinIO console is available at http://localhost:9001 with the credentials `minioadmin` / `minioadmin` (or whatever you set in `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`). Create the `araw-media` bucket once and the API will reuse it for uploads.
+
 ### API Overview
 
 #### Articles (`/api/articles`)
@@ -61,8 +68,9 @@ Publishing triggers `ArticlePublishedEvent`, which emits Gmail notifications aft
 - `GET /?category=` – paginated listing filtered by `MediaCategory`.
 - `DELETE /{id}` – remove object from MinIO and catalog.
 
-#### Public Applications (`/api/public/events/{applicationSlug}/applications`)
-- `POST /` – open endpoint that (optionally) creates a participant, submits their application, and emails them using the Gmail templates. The event must be published, open for registration, and have capacity.
+#### Public Applications
+- `POST /api/public/events/{applicationSlug}/applications` – open endpoint that (optionally) creates a participant, submits their application, and emails them using the Gmail templates. The event must be published, open for registration, and have capacity.
+- `POST /api/public/events/id/{eventId}/applications` – same flow, but resolves the event directly by its UUID instead of the public slug.
 
 ### Authentication (OAuth 2.0)
 - Spring Authorization Server is embedded in the backend. Confidential clients can use the authorization-code + refresh-token flow against the `/oauth2/authorize` and `/oauth2/token` endpoints (see `AuthorizationServerBeansConfig` for the sample `admin-client`).

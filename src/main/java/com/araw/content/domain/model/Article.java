@@ -61,7 +61,7 @@ public class Article extends AuditableEntity {
     @Column(name = "hero_media_id")
     private UUID heroMediaId;
 
-    @ElementCollection(fetch = FetchType.LAZY)
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "article_tags", joinColumns = @JoinColumn(name = "article_id"))
     @Column(name = "tag", nullable = false, length = 50)
     private Set<String> tags = new HashSet<>();

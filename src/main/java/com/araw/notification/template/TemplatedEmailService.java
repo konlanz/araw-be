@@ -1,6 +1,8 @@
 package com.araw.notification.template;
 
 import com.araw.notification.config.EmailTemplateProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -14,6 +16,7 @@ import java.util.regex.Pattern;
 @Service
 public class TemplatedEmailService {
 
+    private static final Logger log = LoggerFactory.getLogger(TemplatedEmailService.class);
     private static final Pattern SUBJECT_PLACEHOLDER_PATTERN =
             Pattern.compile("\\{\\{\\s*([a-zA-Z0-9_.-]+)\\s*}}");
 
@@ -33,6 +36,12 @@ public class TemplatedEmailService {
     }
 
     public void send(TemplatedEmailRequest request) {
+        if (!isMailConfigured()) {
+            log.warn("Skipping email send for template {}: mail credentials are not configured",
+                    request.getTemplateName());
+            return;
+        }
+
         String subject = renderSubject(request.getSubjectTemplate(), request.getVariables());
         String body = renderer.render(request.getTemplateName(), request.getVariables());
 
@@ -97,5 +106,11 @@ public class TemplatedEmailService {
             }
         }
         return current;
+    }
+
+    private boolean isMailConfigured() {
+        String host = mailProperties.getHost();
+        String username = mailProperties.getUsername();
+        return host != null && !host.isBlank() && username != null && !username.isBlank();
     }
 }

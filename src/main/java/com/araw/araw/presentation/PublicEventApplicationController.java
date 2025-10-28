@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/public/events")
 @RequiredArgsConstructor
@@ -25,5 +27,12 @@ public class PublicEventApplicationController {
     public ApplicationResponse submitApplication(@PathVariable String applicationSlug,
                                                  @Valid @RequestBody PublicEventApplicationRequest request) {
         return publicEventApplicationService.submitApplication(applicationSlug, request);
+    }
+
+    @PostMapping("/id/{eventId}/applications")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApplicationResponse submitApplicationByEventId(@PathVariable UUID eventId,
+                                                          @Valid @RequestBody PublicEventApplicationRequest request) {
+        return publicEventApplicationService.submitApplication(eventId, request);
     }
 }

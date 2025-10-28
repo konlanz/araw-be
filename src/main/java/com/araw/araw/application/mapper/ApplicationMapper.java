@@ -22,6 +22,9 @@ public interface ApplicationMapper {
     @Mapping(target = "eventId", source = "event.id")
     @Mapping(target = "eventTitle", source = "event.title")
     @Mapping(target = "participantId", source = "participant.id")
+    @Mapping(target = "customAnswers", expression = "java(copyMap(application.getCustomAnswers()))")
+    @Mapping(target = "dietaryRestrictions", expression = "java(copySet(application.getDietaryRestrictions()))")
+    @Mapping(target = "medicalConditions", expression = "java(copySet(application.getMedicalConditions()))")
     ApplicationResponse toResponse(Application application);
 
     List<ApplicationResponse> toResponseList(List<Application> applications);
@@ -119,5 +122,13 @@ public interface ApplicationMapper {
                 .mimeType(document.getMimeType())
                 .uploadedAt(document.getUploadedAt())
                 .build();
+    }
+
+    default java.util.Map<String, String> copyMap(java.util.Map<String, String> source) {
+        return source == null ? null : new java.util.LinkedHashMap<>(source);
+    }
+
+    default java.util.Set<String> copySet(java.util.Set<String> source) {
+        return source == null ? null : new java.util.LinkedHashSet<>(source);
     }
 }
