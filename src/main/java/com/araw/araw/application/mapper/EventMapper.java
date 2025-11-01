@@ -4,6 +4,9 @@ import com.araw.araw.application.dto.event.*;
 import com.araw.araw.domain.event.entity.Event;
 import com.araw.araw.domain.event.entity.EventDate;
 import com.araw.araw.domain.event.entity.EventGallery;
+import com.araw.araw.domain.event.entity.EventParticipantHighlight;
+import com.araw.araw.domain.event.entity.GalleryImage;
+import com.araw.araw.domain.event.entity.GalleryVideo;
 import com.araw.araw.domain.event.valueobject.Location;
 import org.mapstruct.*;
 
@@ -20,6 +23,7 @@ public interface EventMapper {
     @Mapping(target = "location", source = "location")
     @Mapping(target = "eventDates", source = "eventDates")
     @Mapping(target = "gallery", source = "gallery")
+    @Mapping(target = "participantHighlights", source = "participantHighlights")
     @Mapping(target = "availableSpots", expression = "java(calculateAvailableSpots(event))")
     @Mapping(target = "isRegistrationOpen", expression = "java(event.isRegistrationOpen())")
     @Mapping(target = "capacityPercentage", expression = "java(calculateCapacityPercentage(event))")
@@ -84,6 +88,14 @@ public interface EventMapper {
     List<EventDateDto> toEventDateDtoList(List<EventDate> eventDates);
 
     EventGalleryDto toEventGalleryDto(EventGallery gallery);
+    GalleryImageDto toGalleryImageDto(GalleryImage image);
+    List<GalleryImageDto> toGalleryImageDtoList(List<GalleryImage> images);
+    GalleryVideoDto toGalleryVideoDto(GalleryVideo video);
+    List<GalleryVideoDto> toGalleryVideoDtoList(List<GalleryVideo> videos);
+    @Mapping(target = "participantId", source = "participant.id")
+    @Mapping(target = "participantName", expression = "java(highlight.getParticipant() != null ? highlight.getParticipant().getFullName() : null)")
+    EventParticipantHighlightDto toEventParticipantHighlightDto(EventParticipantHighlight highlight);
+    List<EventParticipantHighlightDto> toEventParticipantHighlightDtoList(List<EventParticipantHighlight> highlights);
 
     default Integer calculateAvailableSpots(Event event) {
         if (event.getMaxParticipants() == null) {

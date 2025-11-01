@@ -1,8 +1,10 @@
 package com.araw.araw.application.service;
 
 import com.araw.araw.application.dto.feedback.CreateFeedbackRequest;
+import com.araw.araw.application.dto.feedback.CreateTestimonialRequest;
 import com.araw.araw.application.dto.feedback.FeedbackResponse;
 import com.araw.araw.application.dto.feedback.FeedbackSummaryResponse;
+import com.araw.araw.application.dto.feedback.TestimonialDto;
 import com.araw.araw.application.dto.feedback.UpdateFeedbackRequest;
 import com.araw.araw.application.mapper.FeedbackMapper;
 import com.araw.araw.domain.application.entity.Application;
@@ -118,6 +120,36 @@ public class FeedbackApplicationService {
         return feedbackMapper.toResponse(saved);
     }
 
+    public FeedbackResponse upsertTestimonial(UUID feedbackId, CreateTestimonialRequest request) {
+        Feedback feedback = getFeedbackEntity(feedbackId);
+        validateTestimonialEligibility(feedback);
+
+        String context = (request.getContext() != null && !request.getContext().isBlank())
+                ? request.getContext().trim()
+                : buildDefaultTestimonialContext(feedback);
+
+        feedback.createTestimonial(request.getQuote().trim(), context);
+
+        var testimonial = feedback.getTestimonial();
+        if (request.getAuthorName() != null && !request.getAuthorName().isBlank()) {
+            testimonial.setAuthorName(request.getAuthorName().trim());
+        }
+        testimonial.setAuthorTitle(request.getAuthorTitle());
+        testimonial.setAuthorPhotoUrl(request.getAuthorPhotoUrl());
+        testimonial.setHighlightText(request.getHighlightText());
+        testimonial.setVideoTestimonialUrl(request.getVideoTestimonialUrl());
+        testimonial.setDisplayOrder(request.getDisplayOrder());
+        testimonial.setIsFeatured(Boolean.TRUE.equals(request.getIsFeatured()));
+        testimonial.setIsPublished(request.getPublish() == null || Boolean.TRUE.equals(request.getPublish()));
+
+        if (Boolean.TRUE.equals(request.getPublish())) {
+            feedback.publish();
+        }
+
+        Feedback saved = feedbackRepository.save(feedback);
+        return feedbackMapper.toResponse(saved);
+    }
+
     @Transactional(readOnly = true)
     public FeedbackResponse getFeedback(UUID feedbackId) {
         return feedbackMapper.toResponse(getFeedbackEntity(feedbackId));
@@ -141,6 +173,26 @@ public class FeedbackApplicationService {
         return feedbackDomainService.getEventInsights(eventId);
     }
 
+    @Transactional(readOnly = true)
+    public Page<TestimonialDto> listTestimonials(UUID eventId, Boolean featuredOnly, Pageable pageable) {
+        Page<Feedback> page;
+        boolean featured = Boolean.TRUE.equals(featuredOnly);
+        if (featured) {
+            if (eventId != null) {
+                page = feedbackRepository.findFeaturedTestimonialsPage(eventId, pageable);
+            } else {
+                page = feedbackRepository.findFeaturedTestimonialsPage(pageable);
+            }
+        } else {
+            if (eventId != null) {
+                page = feedbackRepository.findTestimonialsByEvent(eventId, pageable);
+            } else {
+                page = feedbackRepository.findTestimonials(pageable);
+            }
+        }
+        return page.map(feedbackMapper::toTestimonialDto);
+    }
+
     public void deleteFeedback(UUID feedbackId) {
         Feedback feedback = getFeedbackEntity(feedbackId);
         feedbackRepository.delete(feedback);
@@ -149,6 +201,26 @@ public class FeedbackApplicationService {
     private Feedback getFeedbackEntity(UUID feedbackId) {
         return feedbackRepository.findById(feedbackId)
                 .orElseThrow(() -> new DomainNotFoundException("Feedback not found: " + feedbackId));
+    }
+
+    private void validateTestimonialEligibility(Feedback feedback) {
+        if (!Boolean.TRUE.equals(feedback.getConsentToPublish())) {
+            throw new DomainValidationException("Cannot create testimonials without publication consent");
+        }
+        if (feedback.getRating() == null || feedback.getRating().getOverallRating() == null
+                || feedback.getRating().getOverallRating() < 4) {
+            throw new DomainValidationException("Testimonials require an overall rating of at least 4");
+        }
+    }
+
+    private String buildDefaultTestimonialContext(Feedback feedback) {
+        String eventTitle = feedback.getEvent() != null ? feedback.getEvent().getTitle() : "";
+        String type = feedback.getEvent() != null && feedback.getEvent().getEventType() != null
+                ? feedback.getEvent().getEventType().getDisplayName()
+                : "Event";
+        return (eventTitle != null && !eventTitle.isBlank())
+                ? "%s - %s".formatted(eventTitle, type)
+                : type;
     }
 
     private ApplicationStatus resolveApplicationStatus(UUID eventId, Participant participant, String email) {

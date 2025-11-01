@@ -53,6 +53,11 @@ public class EventController {
         return eventService.publishEvent(eventId);
     }
 
+    @PostMapping("/{eventId}/complete")
+    public EventResponse completeEvent(@PathVariable UUID eventId) {
+        return eventService.completeEvent(eventId);
+    }
+
     @PostMapping("/{eventId}/cancel")
     public EventResponse cancelEvent(@PathVariable UUID eventId,
                                      @Valid @RequestBody CancelEventRequest request) {

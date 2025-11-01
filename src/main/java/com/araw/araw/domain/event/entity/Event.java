@@ -106,6 +106,10 @@ public class Event {
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private EventGallery gallery;
 
+    @OneToMany(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC, createdAt DESC")
+    private List<EventParticipantHighlight> participantHighlights = new ArrayList<>();
+
     @Column(name = "banner_image_url", length = 1000)
     private String bannerImageUrl;
 
@@ -200,6 +204,16 @@ public class Event {
     public void removeEventDate(EventDate eventDate) {
         eventDates.remove(eventDate);
         eventDate.setEvent(null);
+    }
+
+    public void addParticipantHighlight(EventParticipantHighlight highlight) {
+        participantHighlights.add(highlight);
+        highlight.setEvent(this);
+    }
+
+    public void removeParticipantHighlight(EventParticipantHighlight highlight) {
+        participantHighlights.remove(highlight);
+        highlight.setEvent(null);
     }
 
     public boolean isRegistrationOpen() {

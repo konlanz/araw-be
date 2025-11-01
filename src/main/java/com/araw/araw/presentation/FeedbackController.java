@@ -1,8 +1,10 @@
 package com.araw.araw.presentation;
 
 import com.araw.araw.application.dto.feedback.CreateFeedbackRequest;
+import com.araw.araw.application.dto.feedback.CreateTestimonialRequest;
 import com.araw.araw.application.dto.feedback.FeedbackResponse;
 import com.araw.araw.application.dto.feedback.FeedbackSummaryResponse;
+import com.araw.araw.application.dto.feedback.TestimonialDto;
 import com.araw.araw.application.dto.feedback.UpdateFeedbackRequest;
 import com.araw.araw.application.service.FeedbackApplicationService;
 import com.araw.araw.domain.feedback.service.FeedbackDomainService;
@@ -57,6 +59,12 @@ public class FeedbackController {
         return feedbackService.featureFeedback(feedbackId, featured);
     }
 
+    @PostMapping("/{feedbackId}/testimonial")
+    public FeedbackResponse upsertTestimonial(@PathVariable UUID feedbackId,
+                                              @Valid @RequestBody CreateTestimonialRequest request) {
+        return feedbackService.upsertTestimonial(feedbackId, request);
+    }
+
     @GetMapping("/{feedbackId}")
     public FeedbackResponse getFeedback(@PathVariable UUID feedbackId) {
         return feedbackService.getFeedback(feedbackId);
@@ -68,6 +76,15 @@ public class FeedbackController {
             @RequestParam(value = "search", required = false) String search,
             Pageable pageable) {
         Page<FeedbackSummaryResponse> page = feedbackService.listFeedback(eventId, pageable, search);
+        return PagedResponse.fromPage(page);
+    }
+
+    @GetMapping("/testimonials")
+    public PagedResponse<TestimonialDto> listTestimonials(
+            @RequestParam(value = "eventId", required = false) UUID eventId,
+            @RequestParam(value = "featuredOnly", required = false) Boolean featuredOnly,
+            Pageable pageable) {
+        Page<TestimonialDto> page = feedbackService.listTestimonials(eventId, featuredOnly, pageable);
         return PagedResponse.fromPage(page);
     }
 

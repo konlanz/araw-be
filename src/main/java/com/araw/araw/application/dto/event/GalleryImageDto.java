@@ -19,4 +19,8 @@ public class GalleryImageDto {
     private Integer displayOrder;
     private Boolean isFeatured;
     private LocalDateTime uploadedAt;
+    private String downloadUrl;
+    private UUID mediaAssetId;
+    private Long fileSize;
+    private String mimeType;
 }

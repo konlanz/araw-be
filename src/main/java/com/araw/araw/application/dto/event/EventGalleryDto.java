@@ -4,7 +4,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -16,7 +15,7 @@ public class EventGalleryDto {
     private String title;
     private String description;
     private List<GalleryImageDto> images;
-    private Set<String> videoUrls;
+    private List<GalleryVideoDto> videos;
     private Boolean isPublic;
     private LocalDateTime createdAt;
 }

@@ -40,6 +40,18 @@ public interface FeedbackRepository extends JpaRepository<Feedback, UUID> {
             "AND f.consentToPublish = true ORDER BY f.submittedAt DESC")
     List<Feedback> findFeaturedTestimonials();
 
+    @Query("SELECT f FROM Feedback f WHERE f.testimonial IS NOT NULL")
+    Page<Feedback> findTestimonials(Pageable pageable);
+
+    @Query("SELECT f FROM Feedback f WHERE f.event.id = :eventId AND f.testimonial IS NOT NULL")
+    Page<Feedback> findTestimonialsByEvent(@Param("eventId") UUID eventId, Pageable pageable);
+
+    @Query("SELECT f FROM Feedback f WHERE f.testimonial IS NOT NULL AND f.testimonial.isFeatured = true")
+    Page<Feedback> findFeaturedTestimonialsPage(Pageable pageable);
+
+    @Query("SELECT f FROM Feedback f WHERE f.event.id = :eventId AND f.testimonial IS NOT NULL AND f.testimonial.isFeatured = true")
+    Page<Feedback> findFeaturedTestimonialsPage(@Param("eventId") UUID eventId, Pageable pageable);
+
     @Query("SELECT f FROM Feedback f WHERE f.testimonial IS NOT NULL " +
             "AND f.consentToPublish = true")
     List<Feedback> findFeedbackWithTestimonials();

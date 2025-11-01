@@ -6,6 +6,7 @@ import com.araw.araw.application.dto.application.CreateApplicationRequest;
 import com.araw.araw.application.dto.application.ReviewApplicationRequest;
 import com.araw.araw.application.dto.application.UpdateApplicationRequest;
 import com.araw.araw.application.mapper.ApplicationMapper;
+import com.araw.araw.application.service.result.ParticipantAccountProvisionResult;
 import com.araw.araw.domain.application.entity.Application;
 import com.araw.araw.domain.application.repository.ApplicationRepository;
 import com.araw.araw.domain.application.valueobject.ApplicationStatus;
@@ -40,6 +41,7 @@ public class ApplicationApplicationService {
     private final ApplicationMapper applicationMapper;
     private final TemplatedEmailService templatedEmailService;
     private final ApplicationDocumentService applicationDocumentService;
+    private final ParticipantAccountService participantAccountService;
 
     public ApplicationResponse createApplication(CreateApplicationRequest request) {
         if (request.getEventId() == null) {
@@ -114,8 +116,9 @@ public class ApplicationApplicationService {
             throw new DomainValidationException("Application must be under review, submitted, or waitlisted before acceptance");
         }
         application.accept();
+        ParticipantAccountProvisionResult accountResult = participantAccountService.provisionForApplication(application);
         Application saved = applicationRepository.save(application);
-        sendStatusEmail(saved, "application-accepted.txt", "You're accepted to {{event.title}}!");
+        sendStatusEmail(saved, "application-accepted.txt", "You're accepted to {{event.title}}!", accountResult);
         ApplicationResponse response = applicationMapper.toResponse(saved);
         applicationDocumentService.populateDownloadUrls(response);
         return response;
@@ -215,11 +218,18 @@ public class ApplicationApplicationService {
     }
 
     private void sendStatusEmail(Application application, String templateName, String subjectTemplate) {
+        sendStatusEmail(application, templateName, subjectTemplate, ParticipantAccountProvisionResult.notCreated());
+    }
+
+    private void sendStatusEmail(Application application,
+                                 String templateName,
+                                 String subjectTemplate,
+                                 ParticipantAccountProvisionResult accountResult) {
         if (application.getEmail() == null || application.getEmail().isBlank()) {
             return;
         }
 
-        Map<String, Object> variables = buildEmailVariables(application);
+        Map<String, Object> variables = buildEmailVariables(application, accountResult);
 
         templatedEmailService.send(TemplatedEmailRequest.builder()
                 .templateName(templateName)
@@ -229,7 +239,8 @@ public class ApplicationApplicationService {
                 .build());
     }
 
-    private Map<String, Object> buildEmailVariables(Application application) {
+    private Map<String, Object> buildEmailVariables(Application application,
+                                                    ParticipantAccountProvisionResult accountResult) {
         Map<String, Object> variables = new java.util.HashMap<>();
 
         Map<String, Object> applicant = new java.util.HashMap<>();
@@ -272,6 +283,16 @@ public class ApplicationApplicationService {
             applicationData.put("confirmationToken", application.getConfirmationToken());
         }
         variables.put("application", applicationData);
+
+        if (accountResult != null && accountResult.email() != null) {
+            Map<String, Object> account = new java.util.HashMap<>();
+            account.put("email", accountResult.email());
+            account.put("accountCreated", accountResult.accountCreated());
+            if (accountResult.accountCreated() && accountResult.temporaryPassword() != null) {
+                account.put("temporaryPassword", accountResult.temporaryPassword());
+            }
+            variables.put("account", account);
+        }
 
         return variables;
     }

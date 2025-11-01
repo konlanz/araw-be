@@ -38,6 +38,7 @@ public class EventResponse {
     private Set<String> targetGrades;
     private List<EventDateDto> eventDates;
     private EventGalleryDto gallery;
+    private List<EventParticipantHighlightDto> participantHighlights;
     private String bannerImageUrl;
     private String thumbnailUrl;
     private Boolean isFeatured;

@@ -56,6 +56,12 @@ public class GalleryImage {
     @Column(name = "mime_type")
     private String mimeType;
 
+    @Column(name = "media_asset_id")
+    private UUID mediaAssetId;
+
+    @Column(name = "original_file_name")
+    private String originalFileName;
+
     @CreationTimestamp
     @Column(name = "uploaded_at", updatable = false)
     private LocalDateTime uploadedAt;

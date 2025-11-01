@@ -34,11 +34,9 @@ public class EventGallery {
     @OrderBy("displayOrder ASC, uploadedAt DESC")
     private List<GalleryImage> images = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(name = "event_gallery_videos",
-            joinColumns = @JoinColumn(name = "gallery_id"))
-    @Column(name = "video_url")
-    private Set<String> videoUrls = new HashSet<>();
+    @OneToMany(mappedBy = "gallery", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder ASC, uploadedAt DESC")
+    private List<GalleryVideo> videos = new ArrayList<>();
 
     @Column(name = "is_public")
     private Boolean isPublic = true;
@@ -67,6 +65,29 @@ public class EventGallery {
             Integer newOrder = orderMap.get(img.getId());
             if (newOrder != null) {
                 img.setDisplayOrder(newOrder);
+            }
+        });
+    }
+
+    public void addVideo(GalleryVideo video) {
+        videos.add(video);
+        video.setGallery(this);
+    }
+
+    public void removeVideo(GalleryVideo video) {
+        videos.remove(video);
+        video.setGallery(null);
+    }
+
+    public void reorderVideos(List<UUID> videoIds) {
+        Map<UUID, Integer> orderMap = new HashMap<>();
+        for (int i = 0; i < videoIds.size(); i++) {
+            orderMap.put(videoIds.get(i), i);
+        }
+        videos.forEach(video -> {
+            Integer newOrder = orderMap.get(video.getId());
+            if (newOrder != null) {
+                video.setDisplayOrder(newOrder);
             }
         });
     }

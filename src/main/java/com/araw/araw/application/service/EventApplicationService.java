@@ -32,6 +32,8 @@ public class EventApplicationService {
     private final EventRepository eventRepository;
     private final EventDomainService eventDomainService;
     private final EventMapper eventMapper;
+    private final EventGalleryService eventGalleryService;
+    private final EventParticipantHighlightService eventParticipantHighlightService;
 
     public EventResponse createEvent(CreateEventRequest request) {
         if (request.getEventDates() == null || request.getEventDates().isEmpty()) {
@@ -41,7 +43,7 @@ public class EventApplicationService {
         Event event = eventMapper.toEntity(request);
         applyEventDates(event, request.getEventDates());
         Event saved = eventRepository.save(event);
-        return eventMapper.toResponse(saved);
+        return toResponse(saved);
     }
 
     public EventResponse updateEvent(UUID eventId, UpdateEventRequest request) {
@@ -53,7 +55,7 @@ public class EventApplicationService {
         }
 
         Event saved = eventRepository.save(event);
-        return eventMapper.toResponse(saved);
+        return toResponse(saved);
     }
 
     public EventResponse publishEvent(UUID eventId) {
@@ -62,7 +64,7 @@ public class EventApplicationService {
             throw new DomainValidationException("Cannot publish an event without scheduled dates");
         }
         Event published = eventDomainService.publishEvent(event);
-        return eventMapper.toResponse(published);
+        return toResponse(published);
     }
 
     public EventResponse cancelEvent(UUID eventId, String reason) {
@@ -70,18 +72,18 @@ public class EventApplicationService {
             throw new DomainValidationException("Cancellation reason is required");
         }
         Event cancelled = eventDomainService.cancelEvent(eventId, reason);
-        return eventMapper.toResponse(cancelled);
+        return toResponse(cancelled);
     }
 
     public EventResponse markFeatured(UUID eventId, boolean featured) {
         Event event = getEventEntity(eventId);
         event.setIsFeatured(featured);
         Event saved = eventRepository.save(event);
-        return eventMapper.toResponse(saved);
+        return toResponse(saved);
     }
 
     public EventResponse getEvent(UUID eventId) {
-        return eventMapper.toResponse(getEventEntity(eventId));
+        return toResponse(getEventEntity(eventId));
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +96,12 @@ public class EventApplicationService {
         } else {
             page = eventRepository.findAll(pageable);
         }
-        return page.map(eventMapper::toResponse);
+        Page<EventResponse> responsePage = page.map(eventMapper::toResponse);
+        responsePage.getContent().forEach(resp -> {
+            eventGalleryService.populateMediaUrls(resp.getGallery());
+            eventParticipantHighlightService.populateMediaUrls(resp.getParticipantHighlights());
+        });
+        return responsePage;
     }
 
     @Transactional(readOnly = true)
@@ -105,7 +112,19 @@ public class EventApplicationService {
         } else {
             page = eventRepository.findByIsPublishedTrue(pageable);
         }
-        return page.map(eventMapper::toSummaryResponse);
+        Page<EventSummaryResponse> responsePage = page.map(eventMapper::toSummaryResponse);
+        return responsePage;
+    }
+
+    public EventResponse completeEvent(UUID eventId) {
+        Event event = getEventEntity(eventId);
+        if (event.getStatus() != EventStatus.IN_PROGRESS) {
+            throw new DomainValidationException("Only in-progress events can be completed");
+        }
+        event.complete();
+        Event saved = eventRepository.save(event);
+        eventGalleryService.getGallery(saved.getId());
+        return toResponse(saved);
     }
 
     private Event getEventEntity(UUID eventId) {
@@ -134,5 +153,12 @@ public class EventApplicationService {
                     .build();
             event.addEventDate(eventDate);
         }
+    }
+
+    private EventResponse toResponse(Event event) {
+        EventResponse response = eventMapper.toResponse(event);
+        eventGalleryService.populateMediaUrls(response.getGallery());
+        eventParticipantHighlightService.populateMediaUrls(response.getParticipantHighlights());
+        return response;
     }
 }
