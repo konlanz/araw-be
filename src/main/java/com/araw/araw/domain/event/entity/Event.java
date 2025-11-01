@@ -106,10 +106,10 @@ public class Event {
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     private EventGallery gallery;
 
-    @Column(name = "banner_image_url")
+    @Column(name = "banner_image_url", length = 1000)
     private String bannerImageUrl;
 
-    @Column(name = "thumbnail_url")
+    @Column(name = "thumbnail_url", length = 1000)
     private String thumbnailUrl;
 
     @ManyToOne(fetch = FetchType.LAZY)

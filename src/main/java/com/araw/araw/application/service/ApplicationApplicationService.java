@@ -39,6 +39,7 @@ public class ApplicationApplicationService {
     private final ParticipantRepository participantRepository;
     private final ApplicationMapper applicationMapper;
     private final TemplatedEmailService templatedEmailService;
+    private final ApplicationDocumentService applicationDocumentService;
 
     public ApplicationResponse createApplication(CreateApplicationRequest request) {
         if (request.getEventId() == null) {
@@ -65,7 +66,9 @@ public class ApplicationApplicationService {
         Application saved = applicationRepository.save(application);
         eventRepository.incrementApplicationCount(event.getId());
 
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse updateApplication(UUID applicationId, UpdateApplicationRequest request) {
@@ -80,19 +83,27 @@ public class ApplicationApplicationService {
 
         applicationMapper.updateEntity(application, request);
         Application saved = applicationRepository.save(application);
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse submitApplication(UUID applicationId) {
         Application application = getApplicationEntity(applicationId);
         application.submit();
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse reviewApplication(UUID applicationId, ReviewApplicationRequest request) {
         Application application = getApplicationEntity(applicationId);
         application.review(request.getReviewScore(), request.getReviewNotes(), request.getReviewerName());
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse acceptApplication(UUID applicationId) {
@@ -105,7 +116,9 @@ public class ApplicationApplicationService {
         application.accept();
         Application saved = applicationRepository.save(application);
         sendStatusEmail(saved, "application-accepted.txt", "You're accepted to {{event.title}}!");
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse rejectApplication(UUID applicationId, String reason) {
@@ -117,7 +130,9 @@ public class ApplicationApplicationService {
         Application saved = applicationRepository.save(application);
         eventRepository.decrementApplicationCount(saved.getEvent().getId());
         sendStatusEmail(saved, "application-rejected.txt", "Update on your {{event.title}} application");
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse waitlistApplication(UUID applicationId, Integer position) {
@@ -130,7 +145,9 @@ public class ApplicationApplicationService {
         application.waitlist(waitlistPosition);
         Application saved = applicationRepository.save(application);
         sendStatusEmail(saved, "application-waitlisted.txt", "{{event.title}} application waitlist update");
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse confirmApplication(UUID applicationId) {
@@ -138,7 +155,9 @@ public class ApplicationApplicationService {
         application.confirm();
         Application saved = applicationRepository.save(application);
         sendStatusEmail(saved, "application-confirmed.txt", "{{event.title}} spot confirmed");
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     public ApplicationResponse cancelApplication(UUID applicationId, String reason) {
@@ -150,12 +169,21 @@ public class ApplicationApplicationService {
         Application saved = applicationRepository.save(application);
         eventRepository.decrementApplicationCount(saved.getEvent().getId());
         sendStatusEmail(saved, "application-cancelled.txt", "{{event.title}} application cancelled");
-        return applicationMapper.toResponse(saved);
+        ApplicationResponse response = applicationMapper.toResponse(saved);
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
     }
 
     @Transactional(readOnly = true)
     public ApplicationResponse getApplication(UUID applicationId) {
-        return applicationMapper.toResponse(getApplicationEntity(applicationId));
+        ApplicationResponse response = applicationMapper.toResponse(getApplicationEntity(applicationId));
+        applicationDocumentService.populateDownloadUrls(response);
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public String getDocumentDownloadUrl(UUID applicationId, UUID documentId) {
+        return applicationDocumentService.generateDownloadUrl(applicationId, documentId);
     }
 
     @Transactional(readOnly = true)
@@ -176,7 +204,9 @@ public class ApplicationApplicationService {
         } else {
             page = applicationRepository.findAll(pageable);
         }
-        return page.map(applicationMapper::toResponse);
+        Page<ApplicationResponse> responsePage = page.map(applicationMapper::toResponse);
+        applicationDocumentService.populateDownloadUrls(responsePage.getContent());
+        return responsePage;
     }
 
     private Application getApplicationEntity(UUID applicationId) {

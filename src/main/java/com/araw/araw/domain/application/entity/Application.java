@@ -68,6 +68,10 @@ public class Application {
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ApplicationDocument> documents = new ArrayList<>();
 
+    @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt DESC")
+    private List<ApplicationReviewNote> reviewFeedback = new ArrayList<>();
+
     @Column(name = "guardian_consent")
     private Boolean guardianConsent;
 
@@ -139,6 +143,9 @@ public class Application {
 
     @Column(name = "source")
     private String source; // How they heard about the event
+
+    @Column(name = "linkedin_profile_url", length = 500)
+    private String linkedinProfileUrl;
 
     @Column(name = "ip_address")
     private String ipAddress;

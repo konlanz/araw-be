@@ -18,6 +18,7 @@ import com.araw.shared.exception.DomainNotFoundException;
 import com.araw.shared.exception.DomainValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -38,24 +39,38 @@ public class PublicEventApplicationService {
     private final ParticipantRepository participantRepository;
     private final ParticipantApplicationService participantApplicationService;
     private final ApplicationApplicationService applicationApplicationService;
+    private final ApplicationDocumentService applicationDocumentService;
     private final TemplatedEmailService templatedEmailService;
 
     public ApplicationResponse submitApplication(String applicationSlug,
                                                  PublicEventApplicationRequest request) {
+        return submitApplication(applicationSlug, request, null);
+    }
+
+    public ApplicationResponse submitApplication(String applicationSlug,
+                                                 PublicEventApplicationRequest request,
+                                                 MultipartFile resumeFile) {
         Event event = eventRepository.findByApplicationSlug(applicationSlug)
                 .orElseThrow(() -> new DomainNotFoundException("Event not found for link: " + applicationSlug));
-        return submitApplication(event, request);
+        return submitApplication(event, request, resumeFile);
     }
 
     public ApplicationResponse submitApplication(UUID eventId,
                                                  PublicEventApplicationRequest request) {
+        return submitApplication(eventId, request, null);
+    }
+
+    public ApplicationResponse submitApplication(UUID eventId,
+                                                 PublicEventApplicationRequest request,
+                                                 MultipartFile resumeFile) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new DomainNotFoundException("Event not found: " + eventId));
-        return submitApplication(event, request);
+        return submitApplication(event, request, resumeFile);
     }
 
     private ApplicationResponse submitApplication(Event event,
-                                                  PublicEventApplicationRequest request) {
+                                                  PublicEventApplicationRequest request,
+                                                  MultipartFile resumeFile) {
         validateEventForApplication(event);
 
         CreateApplicationRequest applicationRequest = request.getApplication();
@@ -65,7 +80,12 @@ public class PublicEventApplicationService {
         applicationRequest.setParticipantId(participantId);
 
         ApplicationResponse created = applicationApplicationService.createApplication(applicationRequest);
+        if (resumeFile != null && !resumeFile.isEmpty()) {
+            applicationDocumentService.attachResume(created.getId(), resumeFile);
+        }
+
         ApplicationResponse submitted = applicationApplicationService.submitApplication(created.getId());
+        applicationDocumentService.populateDownloadUrls(submitted);
 
         dispatchSubmissionEmail(event, submitted);
 

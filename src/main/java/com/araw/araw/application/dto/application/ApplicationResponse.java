@@ -25,6 +25,7 @@ public class ApplicationResponse {
     private String motivationStatement;
     private String priorExperience;
     private String learningGoals;
+    private String linkedinProfileUrl;
     private Map<String, String> customAnswers;
     private List<ApplicationDocumentDto> documents;
 

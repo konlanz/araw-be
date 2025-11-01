@@ -17,4 +17,6 @@ public class ApplicationDocumentDto {
     private Long fileSize;
     private String mimeType;
     private LocalDateTime uploadedAt;
+    private UUID mediaAssetId;
+    private String downloadUrl;
 }

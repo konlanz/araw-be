@@ -58,7 +58,10 @@ public class UpdateEventRequest {
 
     private List<EventDateDto> eventDates;
 
+    @Size(max = 1000, message = "Banner image URL must not exceed 1000 characters")
     private String bannerImageUrl;
+
+    @Size(max = 1000, message = "Thumbnail URL must not exceed 1000 characters")
     private String thumbnailUrl;
 
     private Boolean feedbackEnabled;

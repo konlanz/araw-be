@@ -72,6 +72,10 @@ Publishing triggers `ArticlePublishedEvent`, which emits Gmail notifications aft
 - `POST /api/public/events/{applicationSlug}/applications` – open endpoint that (optionally) creates a participant, submits their application, and emails them using the Gmail templates. The event must be published, open for registration, and have capacity.
 - `POST /api/public/events/id/{eventId}/applications` – same flow, but resolves the event directly by its UUID instead of the public slug.
 
+#### Application Reviews (admin)
+- `POST /api/admin/applications/{applicationId}/reviews` – record an admin review note for an application, including category-specific scores (e.g., interview, profile).
+- `GET /api/admin/applications/{applicationId}/reviews` – list all review notes tied to an application for committee visibility.
+
 ### Authentication (OAuth 2.0)
 - Spring Authorization Server is embedded in the backend. Confidential clients can use the authorization-code + refresh-token flow against the `/oauth2/authorize` and `/oauth2/token` endpoints (see `AuthorizationServerBeansConfig` for the sample `admin-client`).
 - Admin users authenticate either using their local credentials (stored in the `admins` table) or via federated Google sign-in (`spring.security.oauth2.client.registration.google.*`). Only pre-existing, active admin emails are allowed; no automatic provisioning occurs.

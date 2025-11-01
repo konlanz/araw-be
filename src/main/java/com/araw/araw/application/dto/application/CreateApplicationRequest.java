@@ -33,6 +33,10 @@ public class CreateApplicationRequest {
     @Size(max = 1000, message = "Learning goals must not exceed 1000 characters")
     private String learningGoals;
 
+    @Size(max = 500, message = "LinkedIn profile URL must not exceed 500 characters")
+    @Pattern(regexp = "^(https?://)?([\\w-]+\\.)?linkedin\\.com/.*$", message = "LinkedIn profile must be a valid linkedin.com URL")
+    private String linkedinProfileUrl;
+
     private Map<String, String> customAnswers;
 
     private Boolean guardianConsent;

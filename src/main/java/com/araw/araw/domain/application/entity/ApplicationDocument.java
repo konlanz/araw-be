@@ -39,6 +39,9 @@ public class ApplicationDocument {
     @Column(name = "mime_type")
     private String mimeType;
 
+    @Column(name = "media_asset_id")
+    private UUID mediaAssetId;
+
     @CreationTimestamp
     @Column(name = "uploaded_at", updatable = false)
     private LocalDateTime uploadedAt;

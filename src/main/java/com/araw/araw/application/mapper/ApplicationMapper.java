@@ -120,6 +120,7 @@ public interface ApplicationMapper {
                 .fileUrl(document.getFileUrl())
                 .fileSize(document.getFileSize())
                 .mimeType(document.getMimeType())
+                .mediaAssetId(document.getMediaAssetId())
                 .uploadedAt(document.getUploadedAt())
                 .build();
     }

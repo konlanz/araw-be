@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -124,5 +125,12 @@ public class ApplicationController {
 
         Page<ApplicationResponse> page = applicationService.searchApplications(filter, pageable);
         return PagedResponse.fromPage(page);
+    }
+
+    @GetMapping("/{applicationId}/documents/{documentId}/download")
+    public Map<String, String> getApplicationDocumentDownloadUrl(@PathVariable UUID applicationId,
+                                                                 @PathVariable UUID documentId) {
+        String url = applicationService.getDocumentDownloadUrl(applicationId, documentId);
+        return Map.of("url", url);
     }
 }
