@@ -67,6 +67,16 @@ public class EventApplicationService {
         return toResponse(published);
     }
 
+    public EventResponse startEvent(UUID eventId) {
+        Event event = getEventEntity(eventId);
+        if (event.getStatus() != EventStatus.UPCOMING) {
+            throw new DomainValidationException("Only upcoming events can be marked as in progress");
+        }
+        event.start();
+        Event saved = eventRepository.save(event);
+        return toResponse(saved);
+    }
+
     public EventResponse cancelEvent(UUID eventId, String reason) {
         if (reason == null || reason.isBlank()) {
             throw new DomainValidationException("Cancellation reason is required");

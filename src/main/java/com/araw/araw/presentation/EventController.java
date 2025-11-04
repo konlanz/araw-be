@@ -53,6 +53,11 @@ public class EventController {
         return eventService.publishEvent(eventId);
     }
 
+    @PostMapping("/{eventId}/start")
+    public EventResponse startEvent(@PathVariable UUID eventId) {
+        return eventService.startEvent(eventId);
+    }
+
     @PostMapping("/{eventId}/complete")
     public EventResponse completeEvent(@PathVariable UUID eventId) {
         return eventService.completeEvent(eventId);
