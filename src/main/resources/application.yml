@@ -29,8 +29,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_USERNAME:}
-    password: ${MAIL_PASSWORD:}
+    username: mythopiaio@gmail.com
+    password: zeyeyqdcarwjxpbp
     properties:
       mail:
         smtp:
@@ -41,6 +41,10 @@ spring:
     oauth2:
       client:
         registration: {}
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
 
 server:
   port: 8081

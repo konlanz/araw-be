@@ -1,11 +1,16 @@
 package com.araw.araw.application.service;
 
+import com.araw.araw.application.dto.application.ApplicantInfoDto;
+import com.araw.araw.application.dto.application.CreateApplicationRequest;
 import com.araw.araw.application.dto.event.CreateEventRequest;
 import com.araw.araw.application.dto.event.EventDateDto;
 import com.araw.araw.application.dto.event.LocationDto;
 import com.araw.araw.application.dto.feedback.CreateFeedbackRequest;
 import com.araw.araw.application.dto.feedback.FeedbackResponse;
 import com.araw.araw.application.dto.feedback.RatingDto;
+import com.araw.araw.application.dto.participant.ContactInfoDto;
+import com.araw.araw.application.dto.participant.CreateParticipantRequest;
+import com.araw.araw.domain.application.valueobject.EducationLevel;
 import com.araw.araw.domain.event.valueobject.EventType;
 import com.araw.araw.domain.feedback.valueobject.FeedbackType;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +20,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +38,14 @@ class FeedbackApplicationServiceTest {
     @Autowired
     private EventApplicationService eventService;
 
+    @Autowired
+    private ApplicationApplicationService applicationService;
+
+    @Autowired
+    private ParticipantApplicationService participantService;
+
     private UUID eventId;
+    private String feedbackEmail = "akosua@example.com";
 
     @BeforeEach
     void setUp() {
@@ -56,8 +69,57 @@ class FeedbackApplicationServiceTest {
                         .sessionEndDate(LocalDateTime.now().plusDays(3).plusHours(2))
                         .sessionName("Main Session")
                         .build()))
+                .feedbackEnabled(true)
+                .feedbackOpensAt(LocalDateTime.now().minusDays(1))
+                .feedbackClosesAt(LocalDateTime.now().plusDays(7))
                 .build();
         eventId = eventService.createEvent(request).getId();
+
+        CreateParticipantRequest participantRequest = CreateParticipantRequest.builder()
+                .firstName("Akosua")
+                .lastName("Mensah")
+                .dateOfBirth(LocalDate.now().minusYears(18))
+                .educationLevel(EducationLevel.HIGH_SCHOOL)
+                .contactInfo(ContactInfoDto.builder()
+                        .email(feedbackEmail)
+                        .phoneNumber("+233200000000")
+                        .addressLine1("200 Unity Road")
+                        .city("Accra")
+                        .stateProvince("Greater Accra")
+                        .country("Ghana")
+                        .build())
+                .build();
+
+        UUID participantId = participantService.createParticipant(participantRequest).getId();
+
+        CreateApplicationRequest applicationRequest = CreateApplicationRequest.builder()
+                .eventId(eventId)
+                .participantId(participantId)
+                .applicantInfo(ApplicantInfoDto.builder()
+                        .firstName("Akosua")
+                        .lastName("Mensah")
+                        .dateOfBirth(LocalDate.now().minusYears(18))
+                        .addressLine1("200 Unity Road")
+                        .city("Accra")
+                        .stateProvince("Greater Accra")
+                        .country("Ghana")
+                        .schoolName("Unity High School")
+                        .gradeLevel("12")
+                        .phoneNumber("+233200000000")
+                        .build())
+                .email(feedbackEmail)
+                .guardianConsent(true)
+                .guardianName("Guardian Mensah")
+                .guardianEmail("guardian@example.com")
+                .guardianPhone("+233200000001")
+                .emergencyContactName("Guardian Mensah")
+                .emergencyContactPhone("+233200000002")
+                .emergencyContactRelation("Parent")
+                .build();
+
+        var application = applicationService.createApplication(applicationRequest);
+        applicationService.submitApplication(application.getId());
+        applicationService.acceptApplication(application.getId());
     }
 
     @Test
@@ -65,7 +127,7 @@ class FeedbackApplicationServiceTest {
         CreateFeedbackRequest request = CreateFeedbackRequest.builder()
                 .eventId(eventId)
                 .submittedByName("Akosua")
-                .submittedByEmail("akosua@example.com")
+                .submittedByEmail(feedbackEmail)
                 .feedbackType(FeedbackType.POST_EVENT)
                 .rating(RatingDto.builder()
                         .overallRating(5)

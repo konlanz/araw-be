@@ -8,6 +8,12 @@ Domain-driven Spring Boot backend for the African Women Researchers platform. It
 - **Media** – Object storage abstraction (`/api/media`) backed by MinIO for images, documents, and other uploads.
 - **Notifications** – Publication email fan-out using Gmail SMTP once articles move to the published state.
 
+### Domain-Driven Design Notes
+- **Aggregates**: `AlumniClass` (students, gallery items), `Participant`, `Event`, and `Application` enforce invariants and own ordering/display rules; entities expose intentful methods rather than field mutation.
+- **Application services**: Orchestrate use cases and transactions (creation, updates, ordering, feedback submission) while delegating validation to aggregates and collaborating with domain services (`ParticipantDomainService`, `FeedbackDomainService`).
+- **Repositories**: Domain-facing interfaces live under `domain.*.repository` with JPA adapters in `infrastructure.*.persistence` to keep persistence concerns isolated.
+- **Cross-cutting**: Email and media storage sit behind services (`TemplatedEmailService`, `MediaStorageService`) injected into application services; tests use in-memory infra and stubbed config.
+
 ### Prerequisites
 - Java 21+ (project targets Java 25 to align with `pom.xml`)
 - Maven 3.9+

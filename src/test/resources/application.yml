@@ -13,12 +13,20 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
     open-in-view: false
   mail:
-    host: localhost
-    port: 1025
-    username: test@example.com
+    host:
+    port: 0
+    username:
     password:
 
 app:
   notifications:
     publication:
       enabled: false
+  media:
+    minio:
+      endpoint: http://localhost:9000
+      bucket: test-bucket
+      access-key: test-access-key
+      secret-key: test-secret-key
+      secure: false
+      presigned-expiry-minutes: 60
