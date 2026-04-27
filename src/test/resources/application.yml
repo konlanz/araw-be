@@ -19,6 +19,8 @@ spring:
     password:
 
 app:
+  security:
+    enabled: false
   notifications:
     publication:
       enabled: false

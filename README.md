@@ -47,7 +47,31 @@ Use `docker compose` to spin up PostgreSQL and MinIO if desired. Ensure MinIO cr
 docker compose up -d postgres minio
 ```
 
-The MinIO console is available at http://localhost:9001 with the credentials `minioadmin` / `minioadmin` (or whatever you set in `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`). Create the `araw-media` bucket once and the API will reuse it for uploads.
+The MinIO console is available at `http://localhost:${HOST_MINIO_CONSOLE_PORT:-9901}` with the credentials `minioadmin` / `minioadmin` (or whatever you set in `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`). Create the `araw-media` bucket once and the API will reuse it for uploads.
+
+For servers where Postgres/MinIO default ports are already in use, this project supports configurable host ports:
+
+- `HOST_POSTGRES_PORT` (default `55432`)
+- `HOST_MINIO_API_PORT` (default `9900`)
+- `HOST_MINIO_CONSOLE_PORT` (default `9901`)
+
+To bootstrap backend services and start the API in one command:
+
+```bash
+./deploy-backend.sh
+```
+
+You must provide `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (in shell env or `.env.deploy`).
+
+Operational helpers:
+
+```bash
+# stop the running backend process (uses .run/backend.pid)
+./stop-backend.sh
+
+# stop + deploy/start again
+./restart-backend.sh
+```
 
 ### API Overview
 
@@ -83,14 +107,11 @@ Publishing triggers `ArticlePublishedEvent`, which emits Gmail notifications aft
 - `GET /api/admin/applications/{applicationId}/reviews` – list all review notes tied to an application for committee visibility.
 
 ### Authentication (OAuth 2.0)
-- Spring Authorization Server is embedded in the backend. Confidential clients can use the authorization-code + refresh-token flow against the `/oauth2/authorize` and `/oauth2/token` endpoints (see `AuthorizationServerBeansConfig` for the sample `admin-client`).
-- Admin users authenticate either using their local credentials (stored in the `admins` table) or via federated Google sign-in (`spring.security.oauth2.client.registration.google.*`). Only pre-existing, active admin emails are allowed; no automatic provisioning occurs.
-- Resource calls under `/api/admin/**` require valid bearer tokens; participant/volunteer APIs remain open.
-
-- `POST /google` – accepts a Google `idToken`, verifies it, and (if the email matches an existing active admin) returns a signed JWT.
-- `POST /logout` – revokes the caller's bearer token (client should discard it as well).
-
-All non-auth endpoints now expect a `Authorization: Bearer <token>` header obtained from Google sign-in.
+- All write operations (POST/PUT/PATCH/DELETE) require a valid Google OAuth 2.0 ID token sent as `Authorization: Bearer <token>`.
+- Tokens are validated against the Google issuer (`https://accounts.google.com`) and the configured client id (`spring.security.oauth2.client.registration.google.client-id`).
+- Read-only GET requests remain public; Swagger UI and actuator endpoints are also open for diagnostics.
+- Configure your Google OAuth client via `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` or the matching `application.yml` properties. The default redirect URI uses `{baseUrl}/login/oauth2/code/google`.
+- Responses use bearer-token 401/403 semantics suitable for single-page apps; sessions remain stateless.
 
 ### Testing
 ```bash

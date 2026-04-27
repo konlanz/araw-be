@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "${HOST_POSTGRES_PORT:-55432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
 
@@ -19,8 +19,8 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${HOST_MINIO_API_PORT:-9900}:9000"
+      - "${HOST_MINIO_CONSOLE_PORT:-9901}:9001"
     volumes:
       - minio-data:/data
       - minio-config:/root/.minio
@@ -32,5 +32,8 @@ services:
 
 volumes:
   postgres-data:
+    name: araw-postgres-data
   minio-data:
+    name: araw-minio-data
   minio-config:
+    name: araw-minio-config

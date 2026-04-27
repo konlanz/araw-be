@@ -1,5 +1,6 @@
 package com.araw.shared.api;
 
+import com.araw.infrastructure.security.AuthController;
 import com.araw.shared.exception.DomainNotFoundException;
 import com.araw.shared.exception.DomainValidationException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -57,6 +58,20 @@ public class RestExceptionHandler {
     public ResponseEntity<ApiError> handleDataIntegrityViolation(DataIntegrityViolationException ex,
                                                                  HttpServletRequest request) {
         return buildResponse(HttpStatus.CONFLICT, ex, request, List.of("Database constraint violated"));
+    }
+
+    @ExceptionHandler(AuthController.AdminNotFoundException.class)
+    public ResponseEntity<ApiError> handleAdminNotFound(AuthController.AdminNotFoundException ex,
+                                                        HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex, request,
+                List.of("Your Google account is not registered as an admin."));
+    }
+
+    @ExceptionHandler(AuthController.AdminInactiveException.class)
+    public ResponseEntity<ApiError> handleAdminInactive(AuthController.AdminInactiveException ex,
+                                                        HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, ex, request,
+                List.of("Your admin account has been deactivated."));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
