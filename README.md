@@ -63,6 +63,14 @@ To bootstrap backend services and start the API in one command:
 
 You must provide `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (in shell env or `.env.deploy`).
 
+`deploy-backend.sh` requires a **Java 21 JDK** on the server (not just a JRE). If compilation fails with `release version 21 not supported`, install JDK 21 and/or set `JAVA_HOME` explicitly.
+
+`.env.deploy` is sourced with `set -a` so variables are **exported** for `docker compose` interpolation (important: compose does not read `.env.deploy` automatically).
+
+If Postgres was first initialized with a different password than your current `.env.deploy`, you must either:
+- rotate the DB user password inside Postgres to match, or
+- recreate the volume (destructive): `docker compose down -v` (this deletes DB data)
+
 Operational helpers:
 
 ```bash
