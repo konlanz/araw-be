@@ -16,18 +16,20 @@ export HOST_MINIO_API_PORT="${HOST_MINIO_API_PORT:-9900}"
 export HOST_MINIO_CONSOLE_PORT="${HOST_MINIO_CONSOLE_PORT:-9901}"
 
 export POSTGRES_DB="${POSTGRES_DB:-springboot_db}"
-export POSTGRES_USER="${POSTGRES_USER:-postgres}"
-export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-postgres}"
 
 # Keep docker-compose Postgres creds and Spring datasource creds aligned.
 # Prefer explicit POSTGRES_* for compose; if only Spring vars are provided, mirror them.
-if [[ -n "${SPRING_DATASOURCE_USERNAME:-}" ]]; then
-  export POSTGRES_USER="${POSTGRES_USER:-${SPRING_DATASOURCE_USERNAME}}"
+if [[ -n "${POSTGRES_USER:-}" && -n "${SPRING_DATASOURCE_USERNAME:-}" && "${POSTGRES_USER}" != "${SPRING_DATASOURCE_USERNAME}" ]]; then
+  echo "ERROR: POSTGRES_USER and SPRING_DATASOURCE_USERNAME must match for this deployment script."
+  exit 1
 fi
-if [[ -n "${SPRING_DATASOURCE_PASSWORD:-}" ]]; then
-  export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-${SPRING_DATASOURCE_PASSWORD}}"
+if [[ -n "${POSTGRES_PASSWORD:-}" && -n "${SPRING_DATASOURCE_PASSWORD:-}" && "${POSTGRES_PASSWORD}" != "${SPRING_DATASOURCE_PASSWORD}" ]]; then
+  echo "ERROR: POSTGRES_PASSWORD and SPRING_DATASOURCE_PASSWORD must match for this deployment script."
+  exit 1
 fi
 
+export POSTGRES_USER="${POSTGRES_USER:-${SPRING_DATASOURCE_USERNAME:-postgres}}"
+export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-${SPRING_DATASOURCE_PASSWORD:-postgres}}"
 export SPRING_DATASOURCE_USERNAME="${SPRING_DATASOURCE_USERNAME:-${POSTGRES_USER}}"
 export SPRING_DATASOURCE_PASSWORD="${SPRING_DATASOURCE_PASSWORD:-${POSTGRES_PASSWORD}}"
 
@@ -110,6 +112,15 @@ echo "Waiting for Postgres..."
 until docker exec postgres-dev pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; do
   sleep 1
 done
+if ! docker exec -e PGPASSWORD="${SPRING_DATASOURCE_PASSWORD}" postgres-dev \
+  psql -h 127.0.0.1 -U "${SPRING_DATASOURCE_USERNAME}" -d "${POSTGRES_DB}" -c "select 1;" >/dev/null 2>&1; then
+  echo "ERROR: Postgres is running, but the backend datasource credentials cannot log in."
+  echo "If the Docker volume already existed, it keeps the credentials from first initialization."
+  echo "Fix by rotating the database role password or, for a fresh dev database, recreate the volume:"
+  echo "  docker compose -f compose.yaml down -v"
+  echo "  ./deploy-backend.sh"
+  exit 1
+fi
 
 echo "Waiting for MinIO..."
 until curl -fsS "http://localhost:${HOST_MINIO_API_PORT}/minio/health/ready" >/dev/null; do

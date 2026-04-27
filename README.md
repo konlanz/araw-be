@@ -47,6 +47,8 @@ Use `docker compose` to spin up PostgreSQL and MinIO if desired. Ensure MinIO cr
 docker compose up -d postgres minio
 ```
 
+If using custom `POSTGRES_*` credentials from `.env.deploy`, either run `./deploy-backend.sh` directly or source `.env.deploy` before manually running `docker compose`; Postgres only applies `POSTGRES_USER` / `POSTGRES_PASSWORD` the first time the data volume is initialized.
+
 The MinIO console is available at `http://localhost:${HOST_MINIO_CONSOLE_PORT:-9901}` with the credentials `minioadmin` / `minioadmin` (or whatever you set in `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`). Create the `araw-media` bucket once and the API will reuse it for uploads.
 
 For servers where Postgres/MinIO default ports are already in use, this project supports configurable host ports:
