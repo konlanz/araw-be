@@ -31,28 +31,28 @@ public class AlumniClassStudent extends AuditableEntity {
     @JoinColumn(name = "alumni_class_id", nullable = false)
     private AlumniClass alumniClass;
 
-    @Column(name = "full_name", nullable = false, length = 160)
+    @Column(name = "full_name", nullable = false, columnDefinition = "TEXT")
     private String fullName;
 
-    @Column(name = "role", length = 120)
+    @Column(name = "role", columnDefinition = "TEXT")
     private String role;
 
-    @Column(name = "quote", length = 512)
+    @Column(name = "quote", columnDefinition = "TEXT")
     private String quote;
 
-    @Column(name = "profile", length = 1024)
+    @Column(name = "profile", columnDefinition = "TEXT")
     private String profile;
 
-    @Column(name = "capstone_project_description", length = 1024)
+    @Column(name = "capstone_project_description", columnDefinition = "TEXT")
     private String capstoneProjectDescription;
 
-    @Column(name = "school_attended", length = 160)
+    @Column(name = "school_attended", columnDefinition = "TEXT")
     private String schoolAttended;
 
-    @Column(name = "current_location", length = 160)
+    @Column(name = "current_location", columnDefinition = "TEXT")
     private String currentLocation;
 
-    @Column(name = "project_worked_on", length = 255)
+    @Column(name = "project_worked_on", columnDefinition = "TEXT")
     private String projectWorkedOn;
 
     @Column(name = "photo_media_id")
