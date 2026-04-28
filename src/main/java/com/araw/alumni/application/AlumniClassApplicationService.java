@@ -58,8 +58,12 @@ public class AlumniClassApplicationService {
                 command.description(),
                 command.coverMediaId()
         );
-        applyStudentPayloads(alumniClass, command.students());
-        applyGalleryPayloads(alumniClass, command.galleryItems());
+        if (command.students() != null) {
+            applyStudentPayloads(alumniClass, command.students());
+        }
+        if (command.galleryItems() != null) {
+            applyGalleryPayloads(alumniClass, command.galleryItems());
+        }
         return alumniClassRepository.save(alumniClass);
     }
 

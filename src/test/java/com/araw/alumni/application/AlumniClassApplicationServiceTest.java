@@ -141,6 +141,67 @@ class AlumniClassApplicationServiceTest {
     }
 
     @Test
+    void updateClassPreservesNestedCollectionsWhenPayloadsAreOmitted() {
+        AlumniClass created = alumniClassService.createClass(new CreateAlumniClassCommand(
+                "Class of 2021",
+                2021,
+                "Cohort with existing details",
+                null,
+                List.of(
+                        new CreateAlumniClassCommand.StudentPayload(
+                                null,
+                                "Existing Student",
+                                "Lead",
+                                null,
+                                "Profile",
+                                null,
+                                "School",
+                                "Location",
+                                "Project",
+                                null,
+                                0
+                        )
+                ),
+                List.of(
+                        new CreateAlumniClassCommand.GalleryItemPayload(
+                                null,
+                                UUID.randomUUID(),
+                                "Existing memory",
+                                0
+                        )
+                )
+        ));
+
+        AlumniClass updated = alumniClassService.updateClass(new UpdateAlumniClassCommand(
+                created.getId(),
+                "Class of 2021 Updated",
+                2021,
+                "Only core details changed",
+                null,
+                null,
+                null
+        ));
+
+        assertThat(updated.getStudents()).hasSize(1);
+        assertThat(updated.getGalleryItems()).hasSize(1);
+        assertThat(updated.getStudents().get(0).getFullName()).isEqualTo("Existing Student");
+        assertThat(updated.getGalleryItems().get(0).getCaption()).isEqualTo("Existing memory");
+
+        AlumniClass cleared = alumniClassService.updateClass(new UpdateAlumniClassCommand(
+                created.getId(),
+                "Class of 2021 Updated",
+                2021,
+                "Nested details cleared explicitly",
+                null,
+                List.of(),
+                List.of()
+        ));
+
+        assertThat(cleared.getStudents()).isEmpty();
+        assertThat(cleared.getGalleryItems()).isEmpty();
+    }
+
+    @Test
     void addStudentAppendsWithDefaultOrderAndListsStudents() {
         AlumniClass created = alumniClassService.createClass(new CreateAlumniClassCommand(
                 "Class of 2024",

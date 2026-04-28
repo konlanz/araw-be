@@ -3,7 +3,11 @@ package com.araw.alumni.presentation.mapper;
 import com.araw.alumni.domain.model.AlumniClass;
 import com.araw.alumni.domain.model.AlumniClassStudent;
 import com.araw.alumni.presentation.dto.AlumniClassSummaryResponse;
+import com.araw.alumni.presentation.dto.UpdateAlumniClassRequest;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,5 +59,26 @@ class AlumniClassMapperTest {
         assertThat(response.students().get(0).profileSummary())
                 .hasSizeLessThanOrEqualTo(200)
                 .endsWith("…");
+    }
+
+    @Test
+    void updateCommandPreservesOmittedNestedPayloadsAsNull() {
+        UUID classId = UUID.randomUUID();
+
+        var omittedPayloads = mapper.toUpdateCommand(
+                classId,
+                new UpdateAlumniClassRequest("Class of 2026", 2026, null, null, null, null)
+        );
+
+        assertThat(omittedPayloads.students()).isNull();
+        assertThat(omittedPayloads.galleryItems()).isNull();
+
+        var explicitEmptyPayloads = mapper.toUpdateCommand(
+                classId,
+                new UpdateAlumniClassRequest("Class of 2026", 2026, null, null, List.of(), List.of())
+        );
+
+        assertThat(explicitEmptyPayloads.students()).isEmpty();
+        assertThat(explicitEmptyPayloads.galleryItems()).isEmpty();
     }
 }

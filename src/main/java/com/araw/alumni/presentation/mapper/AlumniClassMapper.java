@@ -33,8 +33,8 @@ public class AlumniClassMapper {
                 request.graduationYear(),
                 request.description(),
                 request.coverMediaId(),
-                toStudentPayloads(request.students()),
-                toGalleryPayloads(request.galleryItems())
+                request.students() != null ? toStudentPayloads(request.students()) : null,
+                request.galleryItems() != null ? toGalleryPayloads(request.galleryItems()) : null
         );
     }
 
@@ -45,8 +45,8 @@ public class AlumniClassMapper {
                 request.graduationYear(),
                 request.description(),
                 request.coverMediaId(),
-                toStudentPayloads(request.students()),
-                toGalleryPayloads(request.galleryItems())
+                request.students() != null ? toStudentPayloads(request.students()) : null,
+                request.galleryItems() != null ? toGalleryPayloads(request.galleryItems()) : null
         );
     }
 
