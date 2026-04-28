@@ -71,7 +71,7 @@ You must provide `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (in shell env or 
 
 If Postgres was first initialized with a different password than your current `.env.deploy`, you must either:
 - rotate the DB user password inside Postgres to match, or
-- recreate the volume (destructive): `docker compose down -v` (this deletes DB data)
+- recreate the Postgres volume (destructive): `docker compose -f compose.yaml down && docker volume rm araw-postgres-data` (this deletes DB data)
 
 Operational helpers:
 

@@ -112,12 +112,27 @@ echo "Waiting for Postgres..."
 until docker exec postgres-dev pg_isready -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" >/dev/null 2>&1; do
   sleep 1
 done
-if ! docker exec -e PGPASSWORD="${SPRING_DATASOURCE_PASSWORD}" postgres-dev \
-  psql -h 127.0.0.1 -U "${SPRING_DATASOURCE_USERNAME}" -d "${POSTGRES_DB}" -c "select 1;" >/dev/null 2>&1; then
+echo "Verifying Postgres login for ${SPRING_DATASOURCE_USERNAME}@${POSTGRES_DB}..."
+POSTGRES_LOGIN_ERROR=""
+for attempt in {1..60}; do
+  if POSTGRES_LOGIN_ERROR="$(
+    docker exec -e PGPASSWORD="${SPRING_DATASOURCE_PASSWORD}" postgres-dev \
+      psql -h 127.0.0.1 -U "${SPRING_DATASOURCE_USERNAME}" -d "${POSTGRES_DB}" \
+      -v ON_ERROR_STOP=1 -c "select 1;" 2>&1 >/dev/null
+  )"; then
+    POSTGRES_LOGIN_ERROR=""
+    break
+  fi
+  sleep 1
+done
+if [[ -n "${POSTGRES_LOGIN_ERROR}" ]]; then
   echo "ERROR: Postgres is running, but the backend datasource credentials cannot log in."
+  echo "Attempted login: user=${SPRING_DATASOURCE_USERNAME} database=${POSTGRES_DB}"
+  echo "psql error: ${POSTGRES_LOGIN_ERROR}"
   echo "If the Docker volume already existed, it keeps the credentials from first initialization."
   echo "Fix by rotating the database role password or, for a fresh dev database, recreate the volume:"
-  echo "  docker compose -f compose.yaml down -v"
+  echo "  docker compose -f compose.yaml down"
+  echo "  docker volume rm araw-postgres-data"
   echo "  ./deploy-backend.sh"
   exit 1
 fi
